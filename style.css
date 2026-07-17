@@ -775,6 +775,34 @@ nav {
   gap: 12px;
 }
 
+/* ══════════════════════════════
+   HAMBURGER BUTTON
+   ══════════════════════════════ */
+.hamburger {
+  display: none; /* hidden on desktop */
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--cream);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
 .theme-switch {
   background: none;
   border: none;
@@ -1508,9 +1536,9 @@ body.light-mode .switch-thumb .icon-sun {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(36, 26, 26, 0.7);
-  border: 2px solid var(--latte);
-  color: var(--latte);
+  background: rgba(20, 12, 12, 0.75);
+  border: 2px solid #D4A96A;
+  color: #D4A96A;
   width: 70px;
   height: 70px;
   border-radius: 50%;
@@ -1521,13 +1549,12 @@ body.light-mode .switch-thumb .icon-sun {
   cursor: pointer;
   transition: all 0.3s ease;
   padding-left: 5px;
-  /* visually center play icon */
   backdrop-filter: blur(4px);
 }
 
 .video-overlay-play:hover {
-  background: var(--latte);
-  color: var(--dark-roast);
+  background: #D4A96A;
+  color: #241A1A;
   transform: translate(-50%, -50%) scale(1.1);
 }
 
@@ -1620,6 +1647,67 @@ body.light-mode .switch-thumb .icon-sun {
   nav {
     padding: 18px 24px;
     gap: 24px;
+  }
+
+  /* Show hamburger, keep header-action row intact */
+  .hamburger {
+    display: flex;
+  }
+
+  /* Nav links hidden by default on mobile, shown when .open */
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    order: 3;
+    border-top: 1px solid var(--nav-border);
+    padding: 8px 0;
+    background-color: var(--nav-bg);
+    backdrop-filter: blur(15px);
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-links li {
+    width: 100%;
+  }
+
+  .nav-item {
+    display: block;
+    padding: 14px 5%;
+    border-bottom: 1px solid var(--nav-border);
+  }
+
+  .nav-item::after {
+    display: none;
+  }
+
+  .nav-container {
+    flex-wrap: wrap;
+  }
+
+  .logo-wrapper {
+    flex: 1;
+  }
+
+  /* Music player NOT sticky on mobile */
+  .music-player {
+    position: static;
+    min-width: unset;
+    width: 100%;
+  }
+
+  .audio-container {
+    flex-direction: column;
+  }
+
+  .my-gear {
+    flex: 1;
+    min-width: unset;
+    width: 100%;
   }
 
   .hero {
@@ -1733,21 +1821,6 @@ body.light-mode .switch-thumb .icon-sun {
 @media (max-width: 768px) {
   #main-header nav {
     padding: 15px 0;
-  }
-
-  .nav-container {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .nav-links {
-    gap: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .header-action {
-    display: none;
   }
 }
 

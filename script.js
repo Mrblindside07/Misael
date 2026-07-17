@@ -3,13 +3,13 @@ const playlist = [
         title: "Santa Doesn't Know You Like I Do",
         artist: "Sabrina Carpenter",
         cover: 'fruitcake cover.jpg',
-        audio: 'santa doesn’t know you like i do.flac'
+        audio: "santa doesn't know you like i do.flac"
     },
     {
         title: "Don't Smile",
         artist: "Sabrina Carpenter",
         cover: 'short n sweet cover.jpg',
-        audio: 'Sabrina Carpenter - Don’t Smile.flac'
+        audio: "Sabrina Carpenter - Don't Smile.flac"
     },
     {
         title: "Espresso",
@@ -104,6 +104,9 @@ audioEl.addEventListener("ended", function () {
 
 loadTrack(currentTrackIndex);
 
+/* ══════════════════════════════
+   SCROLL: shrink nav
+   ══════════════════════════════ */
 window.addEventListener('scroll', function() {
     const header = document.querySelector('nav');
     if (window.scrollY > 50) {
@@ -115,19 +118,33 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// Mobile navigation toggle
-const navToggleBtn = document.getElementById('nav-toggle');
-const navLinks = document.querySelector('.nav-links');
-if (navToggleBtn && navLinks) {
-  navToggleBtn.addEventListener('click', () => {
-    navLinks.classList.toggle('open');
-  });
+/* ══════════════════════════════
+   HAMBURGER MENU
+   ══════════════════════════════ */
+const hamburger   = document.getElementById('nav-toggle');
+const navLinks    = document.querySelector('.nav-links');
+
+if (hamburger && navLinks) {
+    hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('open');
+        hamburger.classList.toggle('open');
+    });
+
+    // Close menu when a nav link is clicked
+    navLinks.querySelectorAll('.nav-item').forEach(link => {
+        link.addEventListener('click', () => {
+            navLinks.classList.remove('open');
+            hamburger.classList.remove('open');
+        });
+    });
 }
 
+/* ══════════════════════════════
+   THEME TOGGLE
+   ══════════════════════════════ */
 const themeToggleBtn = document.getElementById('theme-toggle');
 if (themeToggleBtn) {
     const saved = localStorage.getItem('theme');
-    // Default is LIGHT mode. Only go dark if user explicitly saved 'dark'.
     if (saved === 'dark') {
         document.body.classList.remove('light-mode');
     } else {
@@ -144,19 +161,14 @@ if (themeToggleBtn) {
    ══════════════════════════════ */
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
-    if(modal) {
-        modal.classList.add('active');
-    }
+    if(modal) modal.classList.add('active');
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if(modal) {
-        modal.classList.remove('active');
-    }
+    if(modal) modal.classList.remove('active');
 }
 
-// Close modals when clicking outside
 window.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal-overlay')) {
         e.target.classList.remove('active');
@@ -169,41 +181,34 @@ window.addEventListener('click', (e) => {
 /* ══════════════════════════════
    MULTIMEDIA FILTER & LIGHTBOX
    ══════════════════════════════ */
-const filterBtns = document.querySelectorAll('.filter-btn');
+const filterBtns   = document.querySelectorAll('.filter-btn');
 const masonryItems = document.querySelectorAll('.masonry-item');
 
 filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-        // Remove active class from all
         filterBtns.forEach(b => b.classList.remove('active'));
-        // Add active to current
         btn.classList.add('active');
-        
         const filterValue = btn.getAttribute('data-filter');
-        
         masonryItems.forEach(item => {
-            if (filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
-                item.style.display = 'block';
-            } else {
-                item.style.display = 'none';
-            }
+            item.style.display =
+                (filterValue === 'all' || item.getAttribute('data-category') === filterValue)
+                ? 'block' : 'none';
         });
     });
 });
 
-// Lightbox
 const lightboxOverlay = document.getElementById('lightbox');
-const lightboxImg = document.getElementById('lightbox-img');
-const lightboxClose = document.querySelector('.lightbox-close');
+const lightboxImg     = document.getElementById('lightbox-img');
+const lightboxClose   = document.querySelector('.lightbox-close');
 
 document.querySelectorAll('.gallery-img').forEach(img => {
-    img.addEventListener('click', (e) => {
+    img.addEventListener('click', () => {
         lightboxImg.src = img.src;
         lightboxOverlay.classList.add('active');
     });
 });
 
-if(lightboxClose) {
+if (lightboxClose) {
     lightboxClose.addEventListener('click', () => {
         lightboxOverlay.classList.remove('active');
     });
@@ -213,72 +218,57 @@ if(lightboxClose) {
    BEFORE & AFTER SLIDER
    ══════════════════════════════ */
 const baContainer = document.querySelector('.ba-slider-container');
-const baHandle = document.querySelector('.ba-slider-handle');
-const baAfter = document.querySelector('.ba-image-after');
+const baHandle    = document.querySelector('.ba-slider-handle');
+const baAfter     = document.querySelector('.ba-image-after');
 
 if (baContainer && baHandle && baAfter) {
     let isDragging = false;
 
     const startDrag = () => { isDragging = true; };
-    const endDrag = () => { isDragging = false; };
-    
+    const endDrag   = () => { isDragging = false; };
+
     const doDrag = (e) => {
         if (!isDragging) return;
-        
-        let clientX = e.clientX;
-        if (e.type === 'touchmove') {
-            clientX = e.touches[0].clientX;
-        }
-
+        let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
         const rect = baContainer.getBoundingClientRect();
-        let x = clientX - rect.left; // x position within the container
-        
-        // Boundaries
-        if (x < 0) x = 0;
-        if (x > rect.width) x = rect.width;
-        
-        const percentage = (x / rect.width) * 100;
-        
-        baHandle.style.left = percentage + '%';
-        baAfter.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+        let x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+        const pct = (x / rect.width) * 100;
+        baHandle.style.left = pct + '%';
+        baAfter.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
     };
 
     baHandle.addEventListener('mousedown', startDrag);
     window.addEventListener('mouseup', endDrag);
     window.addEventListener('mousemove', doDrag);
-    
     baHandle.addEventListener('touchstart', startDrag);
     window.addEventListener('touchend', endDrag);
     window.addEventListener('touchmove', doDrag);
 }
 
 /* ══════════════════════════════
-   CUSTOM VIDEO PLAYER CONTROLS
+   CUSTOM VIDEO PLAYER
    ══════════════════════════════ */
-const video = document.getElementById('showreel-video');
-const playPauseBtn = document.getElementById('play-pause-btn');
-const overlayPlayBtn = document.getElementById('overlay-play-btn');
-const muteBtn = document.getElementById('mute-btn');
-const fullscreenBtn = document.getElementById('fullscreen-btn');
-const progressContainer = document.getElementById('video-progress-container');
-const progressFilled = document.getElementById('video-progress-filled');
+const video              = document.getElementById('showreel-video');
+const playPauseBtn       = document.getElementById('play-pause-btn');
+const overlayPlayBtn     = document.getElementById('overlay-play-btn');
+const muteBtn            = document.getElementById('mute-btn');
+const fullscreenBtn      = document.getElementById('fullscreen-btn');
+const progressContainer  = document.getElementById('video-progress-container');
+const progressFilled     = document.getElementById('video-progress-filled');
 const videoCurrentTimeEl = document.getElementById('video-current');
-const durationEl = document.getElementById('video-duration');
+const durationEl         = document.getElementById('video-duration');
 
 if (video) {
-    // Format time function
-    function formatTime(seconds) {
-        const min = Math.floor(seconds / 60);
-        const sec = Math.floor(seconds % 60);
-        return `${min}:${sec < 10 ? '0' + sec : sec}`;
+    function fmtTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        return `${m}:${sec < 10 ? '0' + sec : sec}`;
     }
 
-    // Load metadata to get duration
     video.addEventListener('loadedmetadata', () => {
-        durationEl.textContent = formatTime(video.duration);
+        durationEl.textContent = fmtTime(video.duration);
     });
 
-    // Toggle Play/Pause
     function togglePlay() {
         if (video.paused) {
             video.play();
@@ -295,44 +285,26 @@ if (video) {
     overlayPlayBtn.addEventListener('click', togglePlay);
     video.addEventListener('click', togglePlay);
 
-    // Update Progress Bar & Time
     video.addEventListener('timeupdate', () => {
-        videoCurrentTimeEl.textContent = formatTime(video.currentTime);
-        const progress = (video.currentTime / video.duration) * 100;
-        progressFilled.style.width = `${progress}%`;
+        videoCurrentTimeEl.textContent = fmtTime(video.currentTime);
+        progressFilled.style.width = `${(video.currentTime / video.duration) * 100}%`;
     });
 
-    // Click on progress bar to scrub
     progressContainer.addEventListener('click', (e) => {
         const rect = progressContainer.getBoundingClientRect();
-        const pos = (e.clientX - rect.left) / rect.width;
-        video.currentTime = pos * video.duration;
+        video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
     });
 
-    // Toggle Mute
     muteBtn.addEventListener('click', () => {
         video.muted = !video.muted;
         muteBtn.textContent = video.muted ? '🔇' : '🔊';
     });
 
-    // Toggle Fullscreen
     fullscreenBtn.addEventListener('click', () => {
         if (!document.fullscreenElement) {
-            if (video.requestFullscreen) {
-                video.requestFullscreen();
-            } else if (video.webkitRequestFullscreen) { /* Safari */
-                video.webkitRequestFullscreen();
-            } else if (video.msRequestFullscreen) { /* IE11 */
-                video.msRequestFullscreen();
-            }
+            (video.requestFullscreen || video.webkitRequestFullscreen || video.msRequestFullscreen).call(video);
         } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { /* Safari */
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { /* IE11 */
-                document.msExitFullscreen();
-            }
+            (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen).call(document);
         }
     });
 }
