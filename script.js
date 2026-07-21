@@ -259,7 +259,12 @@ const videoCurrentTimeEl = document.getElementById('video-current');
 const durationEl         = document.getElementById('video-duration');
 
 if (video) {
+    const videoContainer = document.getElementById('custom-video-container');
+    const customControls = document.querySelector('.custom-video-controls');
+    let controlsTimeout;
+
     function fmtTime(s) {
+        if (isNaN(s)) return '0:00';
         const m = Math.floor(s / 60);
         const sec = Math.floor(s % 60);
         return `${m}:${sec < 10 ? '0' + sec : sec}`;
@@ -269,42 +274,134 @@ if (video) {
         durationEl.textContent = fmtTime(video.duration);
     });
 
+    // Make sure duration is set if metadata is already loaded
+    if (video.readyState >= 1) {
+        durationEl.textContent = fmtTime(video.duration);
+    }
+
     function togglePlay() {
         if (video.paused) {
             video.play();
             playPauseBtn.textContent = '⏸';
             overlayPlayBtn.classList.add('hidden');
+            showControls();
         } else {
             video.pause();
             playPauseBtn.textContent = '▶';
             overlayPlayBtn.classList.remove('hidden');
+            showControls();
         }
     }
 
-    playPauseBtn.addEventListener('click', togglePlay);
-    overlayPlayBtn.addEventListener('click', togglePlay);
+    playPauseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlay();
+    });
+    overlayPlayBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlay();
+    });
     video.addEventListener('click', togglePlay);
 
     video.addEventListener('timeupdate', () => {
         videoCurrentTimeEl.textContent = fmtTime(video.currentTime);
-        progressFilled.style.width = `${(video.currentTime / video.duration) * 100}%`;
+        const pct = (video.currentTime / video.duration) * 100;
+        progressFilled.style.width = `${isNaN(pct) ? 0 : pct}%`;
     });
 
-    progressContainer.addEventListener('click', (e) => {
+    // Progress bar seeking support (touch and mouse click/drag)
+    let isSeeking = false;
+    
+    function seekVideo(e) {
         const rect = progressContainer.getBoundingClientRect();
-        video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
+        const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+        const pct = Math.max(0, Math.min((clientX - rect.left) / rect.width, 1));
+        video.currentTime = pct * video.duration;
+    }
+
+    progressContainer.addEventListener('mousedown', (e) => {
+        isSeeking = true;
+        seekVideo(e);
     });
 
-    muteBtn.addEventListener('click', () => {
+    window.addEventListener('mousemove', (e) => {
+        if (isSeeking) seekVideo(e);
+    });
+
+    window.addEventListener('mouseup', () => {
+        isSeeking = false;
+    });
+
+    progressContainer.addEventListener('touchstart', (e) => {
+        isSeeking = true;
+        seekVideo(e);
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+        if (isSeeking) seekVideo(e);
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+        isSeeking = false;
+    });
+
+    muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         video.muted = !video.muted;
         muteBtn.textContent = video.muted ? '🔇' : '🔊';
+        showControls();
     });
 
-    fullscreenBtn.addEventListener('click', () => {
+    fullscreenBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (!document.fullscreenElement) {
-            (video.requestFullscreen || video.webkitRequestFullscreen || video.msRequestFullscreen).call(video);
+            (videoContainer.requestFullscreen || videoContainer.webkitRequestFullscreen || videoContainer.msRequestFullscreen).call(videoContainer);
         } else {
             (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen).call(document);
         }
+        showControls();
     });
+
+    // Handle full screen state change to update button icon if needed
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement === videoContainer) {
+            fullscreenBtn.textContent = '⛶'; // stays custom icon or change if needed
+        } else {
+            fullscreenBtn.textContent = '⛶';
+        }
+    });
+
+    // Auto-hide controls mechanism
+    function showControls() {
+        if (customControls) {
+            customControls.classList.add('visible');
+            videoContainer.style.cursor = 'default';
+        }
+        clearTimeout(controlsTimeout);
+        if (!video.paused) {
+            controlsTimeout = setTimeout(hideControls, 2500);
+        }
+    }
+
+    function hideControls() {
+        if (customControls && !video.paused && !isSeeking) {
+            customControls.classList.remove('visible');
+            videoContainer.style.cursor = 'none';
+        }
+    }
+
+    videoContainer.addEventListener('mousemove', showControls);
+    videoContainer.addEventListener('touchstart', showControls, { passive: true });
+    
+    videoContainer.addEventListener('mouseleave', () => {
+        if (!video.paused) {
+            hideControls();
+        }
+    });
+
+    video.addEventListener('play', showControls);
+    video.addEventListener('pause', showControls);
+
+    // Initial trigger
+    showControls();
 }
