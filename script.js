@@ -1,21 +1,18 @@
+/* ══════════════════════════════
+   MUSIC PLAYER
+   ══════════════════════════════ */
 const playlist = [
     {
         title: "Santa Doesn't Know You Like I Do",
         artist: "Sabrina Carpenter",
         cover: 'fruitcake cover.jpg',
-        audio: "santa doesn't know you like i do.flac"
+        audio: "santa doesn’t know you like i do.flac"
     },
     {
         title: "Don't Smile",
         artist: "Sabrina Carpenter",
         cover: 'short n sweet cover.jpg',
-        audio: "Sabrina Carpenter - Don't Smile.flac"
-    },
-    {
-        title: "Espresso",
-        artist: "Sabrina Carpenter",
-        cover: "espresso_cover.jpg",
-        audio: "espresso.mp3"
+        audio: "Sabrina Carpenter - Don’t Smile.flac"
     }
 ];
 
@@ -36,11 +33,12 @@ let currentTrackIndex = 0;
 
 function loadTrack(index) {
     const track = playlist[index];
-    trackTitle.textContent  = track.title;
-    trackArtist.textContent = track.artist;
-    albumCover.src          = track.cover;
-    audioEl.src             = track.audio;
-    progressBar.value       = 0;
+    trackTitle.textContent    = track.title;
+    trackArtist.textContent   = track.artist;
+    albumCover.src            = track.cover;
+    audioEl.src               = encodeURI(track.audio);
+    audioEl.load();
+    progressBar.value         = 0;
     currentTimeEl.textContent = "0:00";
     totalTimeEl.textContent   = "0:00";
 }
@@ -49,7 +47,12 @@ function playMusic() {
     isPlaying = true;
     playBtn.textContent = "Pause";
     playerWrapper.classList.add("playing");
-    audioEl.play();
+    audioEl.play().catch(err => {
+        console.warn("Audio play error:", err);
+        isPlaying = false;
+        playBtn.textContent = "Play";
+        playerWrapper.classList.remove("playing");
+    });
 }
 
 function pauseMusic() {
@@ -59,62 +62,87 @@ function pauseMusic() {
     audioEl.pause();
 }
 
-playBtn.addEventListener("click", function () {
-    if (isPlaying) { pauseMusic(); } else { playMusic(); }
-});
+if (playBtn) {
+    playBtn.addEventListener("click", function () {
+        if (isPlaying) { 
+            pauseMusic(); 
+        } else { 
+            playMusic(); 
+        }
+    });
+}
 
-nextBtn.addEventListener("click", function () {
-    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-    loadTrack(currentTrackIndex);
-    playMusic();
-});
+if (nextBtn) {
+    nextBtn.addEventListener("click", function () {
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        loadTrack(currentTrackIndex);
+        playMusic();
+    });
+}
 
-prevBtn.addEventListener("click", function () {
-    currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
-    loadTrack(currentTrackIndex);
-    playMusic();
-});
+if (prevBtn) {
+    prevBtn.addEventListener("click", function () {
+        currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+        loadTrack(currentTrackIndex);
+        playMusic();
+    });
+}
 
 function formatTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
     const min = Math.floor(seconds / 60);
     const sec = Math.floor(seconds % 60);
     return min + ":" + (sec < 10 ? "0" : "") + sec;
 }
 
-audioEl.addEventListener("timeupdate", function () {
-    const currentTime = audioEl.currentTime;
-    const duration    = audioEl.duration;
-    if (!isNaN(duration)) {
-        progressBar.value         = (currentTime / duration) * 100;
-        currentTimeEl.textContent = formatTime(currentTime);
-        totalTimeEl.textContent   = formatTime(duration);
-    }
-});
+if (audioEl) {
+    audioEl.addEventListener("timeupdate", function () {
+        const currentTime = audioEl.currentTime;
+        const duration    = audioEl.duration;
+        if (!isNaN(duration) && duration > 0) {
+            progressBar.value         = (currentTime / duration) * 100;
+            currentTimeEl.textContent = formatTime(currentTime);
+            totalTimeEl.textContent   = formatTime(duration);
+        }
+    });
 
-progressBar.addEventListener("input", function () {
-    const duration = audioEl.duration;
-    if (!isNaN(duration)) {
-        audioEl.currentTime = (progressBar.value / 100) * duration;
-    }
-});
+    audioEl.addEventListener("loadedmetadata", function () {
+        totalTimeEl.textContent = formatTime(audioEl.duration);
+    });
 
-audioEl.addEventListener("ended", function () {
-    nextBtn.click();
-});
+    audioEl.addEventListener("ended", function () {
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+        loadTrack(currentTrackIndex);
+        audioEl.addEventListener("canplay", playMusic, { once: true });
+    });
+}
 
-loadTrack(currentTrackIndex);
+if (progressBar) {
+    progressBar.addEventListener("input", function () {
+        const duration = audioEl.duration;
+        if (!isNaN(duration)) {
+            audioEl.currentTime = (progressBar.value / 100) * duration;
+        }
+    });
+}
+
+if (audioEl && playlist.length > 0) {
+    loadTrack(currentTrackIndex);
+}
 
 /* ══════════════════════════════
    SCROLL: shrink nav
    ══════════════════════════════ */
 window.addEventListener('scroll', function() {
     const header = document.querySelector('nav');
-    if (window.scrollY > 50) {
-        header.style.padding = '10px 0';
-        header.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
-    } else {
-        header.style.padding = '15px 0';
-        header.style.boxShadow = 'none';
+    if (header) {
+        if (window.scrollY > 50) {
+            header.style.padding = '10px 0';
+            header.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+        } else {
+            header.style.padding = '15px 0';
+            header.style.boxShadow = 'none';
+        }
     }
 });
 
